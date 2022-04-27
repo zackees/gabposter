@@ -11,7 +11,11 @@ Posts to a gab account text and image.
 ```
 from gabposter import gab_post
 
-gab_post(...)
+USER = "gabusername"
+PASS = "gabpassword"
+FILE_JPG = "myfile.jpg"
+
+gab_post(USER, PASS, "test", jpg_path=FILE_JPG)
 ```
 
 # Tests
