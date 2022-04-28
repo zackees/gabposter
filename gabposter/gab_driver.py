@@ -62,13 +62,15 @@ def _action_make_post(
     actions.perform()
     # Upload the image if it's been specified.
     if jpg_path is not None:
+        # Assert file has jpeg extension.
+        assert jpg_path.lower().endswith(".jpg")
         # Copy the image to the clipboard and then paste it into the post.
         if "http" in jpg_path:
             # download the image url to a local temp file and then put it on the clipboard.
             with tempfile.NamedTemporaryFile(delete=False) as temp:
                 try:
                     temp.close()
-                    download(jpg_path, temp.name)
+                    download(jpg_path, temp.name, replace=True, timeout=60.0)
                     clipboard_load_jpg(temp.name)
                 finally:
                     os.remove(temp.name)
