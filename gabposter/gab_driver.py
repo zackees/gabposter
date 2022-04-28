@@ -104,8 +104,9 @@ def _action_make_post(
     actions.move_to_element(el_post_btn)
     actions.click()
     if not dry_run:
-        time.sleep(1)
         actions.perform()
+    # Give 2 seconds for the post to succeed. Otherwise it can sometimes fail.
+    time.sleep(2)
 
 
 def gab_post(
