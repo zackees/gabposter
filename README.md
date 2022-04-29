@@ -26,6 +26,7 @@ Just simply run `tox` at the command line and everything should be tested. You m
 
 # Changes
 
+  * 1.0.5: Stash downloaded selenium driver in app directory rather than current, to improve app bundling.
   * 1.0.4: Adds gab_test() for testing that connecting to gab works using the webdriver.
   * 1.0.3: Fixed a bug where posts would sometimes not go through, due to the browser exiting too quickly.
   * 1.0.0: Initial code submit
