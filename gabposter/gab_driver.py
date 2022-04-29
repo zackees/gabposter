@@ -122,3 +122,13 @@ def gab_post(
     with Driver("firefox", root="drivers") as driver:
         _action_login(driver, username, password)
         _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
+
+
+def gab_test() -> bool:
+    """Tests if the gab driver works."""
+    try:
+        with Driver("firefox", root="drivers") as driver:
+            driver.get("https://gab.com")
+        return True
+    except Exception:  # pylint: disable=broad-except
+        return False

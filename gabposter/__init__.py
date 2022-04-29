@@ -3,4 +3,4 @@
 """
 
 
-from .gab_driver import gab_post
+from .gab_driver import gab_post, gab_test

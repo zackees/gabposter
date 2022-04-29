@@ -4,7 +4,7 @@
 import os
 import unittest
 
-from gabposter import gab_post
+from gabposter import gab_post, gab_test
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA = os.path.join(HERE, "data")
@@ -17,6 +17,10 @@ PASS = "Yq4F2H9Lvp"
 
 class GabDriverTest(unittest.TestCase):
     """Gab driver test framework."""
+
+    def test_gab_test(self) -> None:
+        """Tests that gab_test works."""
+        self.assertTrue(gab_test())
 
     def test_dryrun_posting(self) -> None:
         """Tests that gab_post works, but doesn't not post."""
