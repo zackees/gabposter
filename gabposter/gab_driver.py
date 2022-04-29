@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path  # type: ignore
-from typing import Optional
+from typing import Optional, Tuple
 
 from autoselenium import Driver  # type: ignore
 
@@ -28,10 +28,12 @@ ssl._create_default_https_context = (  # pylint: disable=protected-access
 
 # Width and height need to be this value in order for the gab sign in to
 # work.
-WIDTH = 1200
+WIDTH = 400
 HEIGHT = 800
 
 TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
+
+DEFAULT_DRIVER_NAME = "chrome"
 
 
 def resource_path(relative_path):
@@ -49,8 +51,23 @@ def _action_login(driver: Driver, username: str, password: str) -> None:
     """Logs into Gab.com and posts the given content."""
     driver.delete_all_cookies()  # Delete any cookies, otherwise sign in breaks.
     driver.set_window_size(WIDTH, HEIGHT)  # Yes this is needed tool, or it breaks.
+    # clear the web driver's local storage.
+    driver.execute_script("localStorage.clear();")
+    driver.execute_script("sessionStorage.clear();")
+    # Do a hard refresh to get the sign in page.
+    driver.refresh()
     # Handle Page sign in, where the user and password are entered.
-    driver.get("https://gab.com/auth/sign_in")
+    driver.get("https://gab.com/")
+    # driver.get("https://gab.com/auth/sign_in")
+    # Wait for the page to load.
+    time.sleep(1)
+    # Find the login button and click it
+    try:
+        el_login_btn = driver.find_element_by_xpath('//*[contains(text(), "Log in")]')
+    except Exception:  # pylint: disable=broad-except
+        # If the login button is not found, then the user is already logged in.
+        pass
+    el_login_btn.click()
     el_email = driver.find_element_by_id("user_email")
     el_email.click()
     el_email.send_keys(username)
@@ -69,7 +86,7 @@ def _action_make_post(
 ) -> None:
     """Makes a social media post"""
     driver.get("https://gab.com/compose")
-    el_compose_window = driver.find_element_by_css_selector("div.DraftEditor-root")
+    el_compose_window = driver.find_element_by_id("main-composer")
     el_compose_window.click()
     # Now use the keyboard to enter in the content.
     actions = ActionChains(driver)
@@ -78,9 +95,7 @@ def _action_make_post(
     # Upload the image if it's been specified.
     if jpg_path is not None:
         # Assert file has jpeg extension.
-        assert jpg_path.lower().endswith(
-            ".jpg"
-        ), f"{__file__}: {jpg_path} is not a jpeg file."
+        assert jpg_path.lower().endswith(".jpg"), f"{__file__}: {jpg_path} is not a jpeg file."
         # Copy the image to the clipboard and then paste it into the post.
         if "http" in jpg_path:
             # download the image url to a local temp file and then put it on the clipboard.
@@ -103,9 +118,7 @@ def _action_make_post(
             try:
                 # Wait for the image to upload.
                 # Find the element with the xpath that includes an image source
-                driver.find_element_by_xpath(
-                    '//img[contains(@src, "media_attachments")]'
-                )
+                driver.find_element_by_xpath('//img[contains(@src, "media_attachments")]')
                 break
             except Exception:  # pylint: disable=broad-except
                 if time.time() > timeout:
@@ -124,8 +137,8 @@ def _action_make_post(
     actions.click()
     if not dry_run:
         actions.perform()
-    # Give 2 seconds for the post to succeed. Otherwise it can sometimes fail.
-    time.sleep(2)
+    # Give 1 second for the post to succeed. Otherwise it can sometimes fail.
+    time.sleep(1)
 
 
 def gab_post(
@@ -134,21 +147,40 @@ def gab_post(
     content: str,
     jpg_path: Optional[str] = None,
     dry_run: bool = False,
+    driver_name: str = DEFAULT_DRIVER_NAME,
 ) -> None:
     """Logs into Gab.com and posts the given content."""
-    # Note that we must use the firefox driver. For some reason the chrome driver
-    # skips the sign in page and causes an error to occur.
+    leaks_session = driver_name != "firefox"
+    if leaks_session:
+        # What the heck is this a bug in chromium or gab? Session id leaks ACROSS
+        # sessions.
+        with Driver(driver_name, root=driver_directory()) as driver:
+            # Deep clean the local device storage and session id which for some reason
+            # is cached.
+            driver.delete_all_cookies()
+            driver.execute_script("localStorage.clear();")
+            driver.execute_script("sessionStorage.clear();")
+            driver.session_id = None
 
-    with Driver("firefox", root=driver_directory()) as driver:
-        _action_login(driver, username, password)
-        _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
+    with Driver(driver_name, root=driver_directory()) as driver:
+        try:
+            _action_login(driver, username, password)
+            _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
+        finally:
+            try:
+                driver.delete_all_cookies()
+                driver.execute_script("window.localStorage.clear();")
+                driver.execute_script("window.sessionStorage.clear();")
+                driver.session_id = None
+            except Exception:  # pylint: disable=broad-except
+                print(f"{__file__}: Failed to clear local/session storage.")
 
 
-def gab_test() -> bool:
+def gab_test(driver_name: str = DEFAULT_DRIVER_NAME) -> Tuple[bool, Optional[Exception]]:
     """Tests if the gab driver works."""
     try:
-        with Driver("firefox", root=driver_directory()) as driver:
+        with Driver(driver_name, root=driver_directory()) as driver:
             driver.get("https://gab.com")
-        return True
-    except Exception:  # pylint: disable=broad-except
-        return False
+        return True, None
+    except Exception as err:  # pylint: disable=broad-except
+        return False, err

@@ -20,7 +20,9 @@ class GabDriverTest(unittest.TestCase):
 
     def test_gab_test(self) -> None:
         """Tests that gab_test works."""
-        self.assertTrue(gab_test())
+        for driver in ["firefox", "chrome", "brave"]:
+            ok, err = gab_test(driver)  # pylint: disable=invalid-name
+            self.assertTrue(ok, f"gab_test failed: {err}")
 
     def test_dryrun_posting(self) -> None:
         """Tests that gab_post works, but doesn't not post."""

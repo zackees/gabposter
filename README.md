@@ -26,6 +26,7 @@ Just simply run `tox` at the command line and everything should be tested. You m
 
 # Changes
 
+  * 1.1.0: Driver now uses chrome by default. Logic improved to work across browsers.
   * 1.0.6: Fix bug where some paths used a different driver directory
   * 1.0.5: Stash downloaded selenium driver in app directory rather than current, to improve app bundling.
   * 1.0.4: Adds gab_test() for testing that connecting to gab works using the webdriver.
