@@ -6,6 +6,7 @@
 
 import os
 import ssl
+import sys
 import tempfile
 import time
 from typing import Optional
@@ -18,6 +19,8 @@ from pyjpgclipboard import clipboard_load_jpg  # type: ignore
 from selenium.webdriver.common.action_chains import ActionChains  # type: ignore
 from selenium.webdriver.common.keys import Keys  # type: ignore
 
+from .app_dir import app_dir
+
 ssl._create_default_https_context = (  # pylint: disable=protected-access
     ssl._create_unverified_context  # pylint: disable=protected-access
 )
@@ -28,6 +31,12 @@ WIDTH = 1200
 HEIGHT = 800
 
 TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 
 def _action_login(driver: Driver, username: str, password: str) -> None:
@@ -127,7 +136,8 @@ def gab_post(
 def gab_test() -> bool:
     """Tests if the gab driver works."""
     try:
-        with Driver("firefox", root="drivers") as driver:
+        driver_directory = app_dir() / "drivers"
+        with Driver("firefox", root=driver_directory) as driver:
             driver.get("https://gab.com")
         return True
     except Exception:  # pylint: disable=broad-except
