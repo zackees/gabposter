@@ -9,11 +9,13 @@ Posts to a gab account text and image.
 # Api
 
 ```
-from gabposter import gab_post
+from gabposter import gab_post, gab_test
 
 USER = "gabusername"
 PASS = "gabpassword"
 FILE_JPG = "myfile.jpg"
+
+assert gab_test(), "Webdriver doesn't work on your system"
 
 gab_post(USER, PASS, "test", jpg_path=FILE_JPG)
 ```
@@ -24,5 +26,6 @@ Just simply run `tox` at the command line and everything should be tested. You m
 
 # Changes
 
+  * 1.0.4: Adds gab_test() for testing that connecting to gab works using the webdriver.
   * 1.0.3: Fixed a bug where posts would sometimes not go through, due to the browser exiting too quickly.
   * 1.0.0: Initial code submit
