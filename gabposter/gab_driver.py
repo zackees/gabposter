@@ -6,17 +6,16 @@
 
 import os
 import ssl
-import sys
 import tempfile
 import time
 from pathlib import Path  # type: ignore
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 from autoselenium import Driver  # type: ignore
-
-# black from .download import download_file
 from download import download  # type: ignore
 from pyjpgclipboard import clipboard_load_jpg  # type: ignore
+from selenium.webdriver import ChromeOptions  # type: ignore
+from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.action_chains import ActionChains  # type: ignore
 from selenium.webdriver.common.keys import Keys  # type: ignore
 
@@ -26,8 +25,7 @@ ssl._create_default_https_context = (  # pylint: disable=protected-access
     ssl._create_unverified_context  # pylint: disable=protected-access
 )
 
-# Width and height need to be this value in order for the gab sign in to
-# work.
+# Simulate a phone screen orientation.
 WIDTH = 400
 HEIGHT = 800
 
@@ -36,37 +34,49 @@ TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
 DEFAULT_DRIVER_NAME = "chrome"
 
 
-def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller"""
-    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
-
-
 def driver_directory() -> Path:
     """Directory containing the web driver."""
     return app_dir() / "drivers"
 
 
+def open_driver(driver_name: str, headless: bool) -> Driver:
+    """Opens the web driver."""
+    opts: Any = None
+    if headless:
+        if driver_name in ["chrome", "brave"]:
+            opts = ChromeOptions()
+            opts.add_argument("--headless")
+            opts.add_argument("--disable-gpu")
+            opts.add_argument("--disable-dev-shm-usage")
+        elif driver_name == "firefox":
+            opts = FirefoxOptions()
+            opts.headless = True
+        else:
+            raise NotImplementedError(
+                f"{__file__}: headless mode for {driver_name} is not supported."
+            )
+    if driver_name == "firefox":
+        print(f"{__file__}: Warning: firefox browser has known issues.")
+    driver = Driver(driver_name, root=driver_directory(), driver_options=opts)
+    return driver
+
+
 def _action_login(driver: Driver, username: str, password: str) -> None:
     """Logs into Gab.com and posts the given content."""
+    # clear the web driver's local storage.
     driver.delete_all_cookies()  # Delete any cookies, otherwise sign in breaks.
     driver.set_window_size(WIDTH, HEIGHT)  # Yes this is needed tool, or it breaks.
-    # clear the web driver's local storage.
-    driver.execute_script("localStorage.clear();")
-    driver.execute_script("sessionStorage.clear();")
     # Do a hard refresh to get the sign in page.
-    driver.refresh()
     # Handle Page sign in, where the user and password are entered.
     driver.get("https://gab.com/")
+    driver.execute_script("localStorage.clear();")
+    driver.execute_script("sessionStorage.clear();")
+    driver.refresh()
     # driver.get("https://gab.com/auth/sign_in")
     # Wait for the page to load.
     time.sleep(1)
     # Find the login button and click it
-    try:
-        el_login_btn = driver.find_element_by_xpath('//*[contains(text(), "Log in")]')
-    except Exception:  # pylint: disable=broad-except
-        # If the login button is not found, then the user is already logged in.
-        pass
+    el_login_btn = driver.find_element_by_xpath('//*[contains(text(), "Log in")]')
     el_login_btn.click()
     el_email = driver.find_element_by_id("user_email")
     el_email.click()
@@ -148,21 +158,20 @@ def gab_post(
     jpg_path: Optional[str] = None,
     dry_run: bool = False,
     driver_name: str = DEFAULT_DRIVER_NAME,
+    headless: bool = False,
 ) -> None:
     """Logs into Gab.com and posts the given content."""
+
     leaks_session = driver_name != "firefox"
     if leaks_session:
         # What the heck is this a bug in chromium or gab? Session id leaks ACROSS
         # sessions.
-        with Driver(driver_name, root=driver_directory()) as driver:
+        with open_driver(driver_name, headless) as driver:
             # Deep clean the local device storage and session id which for some reason
             # is cached.
-            driver.delete_all_cookies()
-            driver.execute_script("localStorage.clear();")
-            driver.execute_script("sessionStorage.clear();")
             driver.session_id = None
 
-    with Driver(driver_name, root=driver_directory()) as driver:
+    with open_driver(driver_name, headless) as driver:
         try:
             _action_login(driver, username, password)
             _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
@@ -176,10 +185,12 @@ def gab_post(
                 print(f"{__file__}: Failed to clear local/session storage.")
 
 
-def gab_test(driver_name: str = DEFAULT_DRIVER_NAME) -> Tuple[bool, Optional[Exception]]:
+def gab_test(
+    driver_name: str = DEFAULT_DRIVER_NAME, headless: bool = False
+) -> Tuple[bool, Optional[Exception]]:
     """Tests if the gab driver works."""
     try:
-        with Driver(driver_name, root=driver_directory()) as driver:
+        with open_driver(driver_name, headless) as driver:
             driver.get("https://gab.com")
         return True, None
     except Exception as err:  # pylint: disable=broad-except
