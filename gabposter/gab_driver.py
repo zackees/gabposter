@@ -7,7 +7,6 @@
 import os
 import tempfile
 import time
-from pathlib import Path
 from typing import Optional, Tuple
 
 from download import download  # type: ignore
@@ -15,7 +14,6 @@ from pyjpgclipboard import clipboard_load_jpg  # type: ignore
 from selenium.webdriver.common.action_chains import ActionChains  # type: ignore
 from selenium.webdriver.common.keys import Keys  # type: ignore
 
-from .app_dir import app_dir
 from .open_webdriver import Driver, open_webdriver
 
 # Simulate a phone screen orientation.
@@ -25,14 +23,6 @@ HEIGHT = 800
 TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
 
 DEFAULT_DRIVER_NAME = "chrome"
-
-HEADLESS = "DISPLAY" not in os.environ
-
-
-def driver_directory() -> Path:
-    """Directory containing the web driver."""
-    out = app_dir()
-    return out
 
 
 def _action_login(driver: Driver, username: str, password: str) -> None:
@@ -135,21 +125,16 @@ def gab_post(
     headless: bool = False,
 ) -> None:
     """Logs into Gab.com and posts the given content."""
-    if HEADLESS:
-        headless = True  # Force headless mode.
-    download_dir = driver_directory()
     leaks_session = driver_name != "firefox"
     if leaks_session:
         # What the heck is this a bug in chromium or gab? Session id leaks ACROSS
         # sessions.
-        with open_webdriver(
-            driver_name, download_directory=download_dir, headless=headless
-        ) as driver:
+        with open_webdriver(driver_name, headless=headless) as driver:
             # Deep clean the local device storage and session id which for some reason
             # is cached.
             driver.session_id = None
 
-    with open_webdriver(driver_name, download_directory=download_dir, headless=headless) as driver:
+    with open_webdriver(driver_name, headless=headless) as driver:
         try:
             _action_login(driver, username, password)
             _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
@@ -167,13 +152,8 @@ def gab_test(
     driver_name: str = DEFAULT_DRIVER_NAME, headless: bool = False
 ) -> Tuple[bool, Optional[Exception]]:
     """Tests if the gab driver works."""
-    if HEADLESS:
-        headless = True  # Force headless mode.
-    download_dir = driver_directory()
     try:
-        with open_webdriver(
-            driver_name, download_directory=download_dir, headless=headless
-        ) as driver:
+        with open_webdriver(driver_name, headless=headless) as driver:
             driver.get("https://gab.com")
         return True, None
     except Exception as err:  # pylint: disable=broad-except

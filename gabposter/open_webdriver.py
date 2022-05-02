@@ -4,8 +4,8 @@
 
 import os
 import ssl
-from pathlib import Path  # type: ignore
-from typing import Any, Optional
+import sys
+from typing import Any
 
 from selenium.webdriver import ChromeOptions  # type: ignore
 from selenium.webdriver import FirefoxOptions
@@ -20,13 +20,16 @@ ssl._create_default_https_context = (  # pylint: disable=protected-access
 os.environ["WDM_SSL_VERIFY"] = "0"
 os.environ["WDM_LOCAL"] = "1"
 
+FORCE_HEADLESS = sys.platform == "linux" and "DISPLAY" not in os.environ
 
-def open_webdriver(driver_name: str, download_directory: Optional[Path], headless: bool) -> Driver:
+
+def open_webdriver(driver_name: str, headless: bool) -> Driver:
     """Opens the web driver."""
+
     opts: Any = None
-    if download_directory is not None:
-        download_directory.mkdir(exist_ok=True, parents=True)
-    if headless:
+    if headless or FORCE_HEADLESS:
+        if FORCE_HEADLESS and not headless:
+            print("\n  WARNING: HEADLESS ENVIRONMENT DETECTED, FORCING HEADLESS")
         if driver_name in ["chrome", "brave"]:
             opts = ChromeOptions()
             opts.add_argument("--headless")
@@ -42,5 +45,4 @@ def open_webdriver(driver_name: str, download_directory: Optional[Path], headles
     if driver_name == "firefox":
         print(f"{__file__}: Warning: firefox browser has known issues.")
     driver = get_webdriver_for(browser=driver_name, options=opts)
-    # driver = Driver(driver_name, root=download_directory, driver_options=opts)
     return driver
