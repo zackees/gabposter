@@ -18,6 +18,7 @@ ssl._create_default_https_context = (  # pylint: disable=protected-access
 )
 
 os.environ["WDM_SSL_VERIFY"] = "0"
+os.environ["WDM_LOCAL"] = "1"
 
 
 def open_webdriver(driver_name: str, download_directory: Optional[Path], headless: bool) -> Driver:
