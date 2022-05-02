@@ -14,8 +14,12 @@ ssl._create_default_https_context = (  # pylint: disable=protected-access
     ssl._create_unverified_context  # pylint: disable=protected-access
 )
 
+from webdriver_setup import get_webdriver_for  # type: ignore
 
-def open_webdriver(driver_name: str, download_directory: Optional[Path], headless: bool) -> Driver:
+
+def open_webdriver(
+    driver_name: str, download_directory: Optional[Path], headless: bool
+) -> Driver:
     """Opens the web driver."""
     opts: Any = None
     if download_directory is not None:
@@ -35,5 +39,6 @@ def open_webdriver(driver_name: str, download_directory: Optional[Path], headles
             )
     if driver_name == "firefox":
         print(f"{__file__}: Warning: firefox browser has known issues.")
-    driver = Driver(driver_name, root=download_directory, driver_options=opts)
+    driver = get_webdriver_for(driver_name, opts)
+    # driver = Driver(driver_name, root=download_directory, driver_options=opts)
     return driver

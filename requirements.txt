@@ -1,3 +1,3 @@
-auto-selenium
+webdriver-setup
 pyjpgclipboard>=1.0.2
 download

@@ -78,7 +78,9 @@ def _action_make_post(
     # Upload the image if it's been specified.
     if jpg_path is not None:
         # Assert file has jpeg extension.
-        assert jpg_path.lower().endswith(".jpg"), f"{__file__}: {jpg_path} is not a jpeg file."
+        assert jpg_path.lower().endswith(
+            ".jpg"
+        ), f"{__file__}: {jpg_path} is not a jpeg file."
         # Copy the image to the clipboard and then paste it into the post.
         if "http" in jpg_path:
             # download the image url to a local temp file and then put it on the clipboard.
@@ -101,7 +103,9 @@ def _action_make_post(
             try:
                 # Wait for the image to upload.
                 # Find the element with the xpath that includes an image source
-                driver.find_element_by_xpath('//img[contains(@src, "media_attachments")]')
+                driver.find_element_by_xpath(
+                    '//img[contains(@src, "media_attachments")]'
+                )
                 break
             except Exception:  # pylint: disable=broad-except
                 if time.time() > timeout:
@@ -146,7 +150,9 @@ def gab_post(
             # is cached.
             driver.session_id = None
 
-    with open_webdriver(driver_name, download_directory=download_dir, headless=headless) as driver:
+    with open_webdriver(
+        driver_name, download_directory=download_dir, headless=headless
+    ) as driver:
         try:
             _action_login(driver, username, password)
             _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
