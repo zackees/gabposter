@@ -5,25 +5,19 @@
 # pylint: disable=too-many-arguments
 
 import os
-import ssl
 import tempfile
 import time
-from pathlib import Path  # type: ignore
-from typing import Any, Optional, Tuple
+from pathlib import Path
+from typing import Optional, Tuple
 
 from autoselenium import Driver  # type: ignore
 from download import download  # type: ignore
 from pyjpgclipboard import clipboard_load_jpg  # type: ignore
-from selenium.webdriver import ChromeOptions  # type: ignore
-from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.action_chains import ActionChains  # type: ignore
 from selenium.webdriver.common.keys import Keys  # type: ignore
 
 from .app_dir import app_dir
-
-ssl._create_default_https_context = (  # pylint: disable=protected-access
-    ssl._create_unverified_context  # pylint: disable=protected-access
-)
+from .open_webdriver import open_webdriver
 
 # Simulate a phone screen orientation.
 WIDTH = 400
@@ -34,35 +28,10 @@ TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
 DEFAULT_DRIVER_NAME = "chrome"
 
 
-def driver_directory(driver_name) -> Path:
+def driver_directory() -> Path:
     """Directory containing the web driver."""
-    out = app_dir() / "drivers" / driver_name
-    out.mkdir(exist_ok=True, parents=True)
+    out = app_dir()
     return out
-
-
-def open_driver(driver_name: str, headless: bool) -> Driver:
-    """Opens the web driver."""
-    opts: Any = None
-    if headless:
-        if driver_name in ["chrome", "brave"]:
-            opts = ChromeOptions()
-            opts.add_argument("--headless")
-            opts.add_argument("--disable-gpu")
-            opts.add_argument("--disable-dev-shm-usage")
-        elif driver_name == "firefox":
-            opts = FirefoxOptions()
-            opts.headless = True
-        else:
-            raise NotImplementedError(
-                f"{__file__}: headless mode for {driver_name} is not supported."
-            )
-    if driver_name == "firefox":
-        print(f"{__file__}: Warning: firefox browser has known issues.")
-    driver = Driver(
-        driver_name, root=driver_directory(driver_name), driver_options=opts
-    )
-    return driver
 
 
 def _action_login(driver: Driver, username: str, password: str) -> None:
@@ -109,9 +78,7 @@ def _action_make_post(
     # Upload the image if it's been specified.
     if jpg_path is not None:
         # Assert file has jpeg extension.
-        assert jpg_path.lower().endswith(
-            ".jpg"
-        ), f"{__file__}: {jpg_path} is not a jpeg file."
+        assert jpg_path.lower().endswith(".jpg"), f"{__file__}: {jpg_path} is not a jpeg file."
         # Copy the image to the clipboard and then paste it into the post.
         if "http" in jpg_path:
             # download the image url to a local temp file and then put it on the clipboard.
@@ -134,9 +101,7 @@ def _action_make_post(
             try:
                 # Wait for the image to upload.
                 # Find the element with the xpath that includes an image source
-                driver.find_element_by_xpath(
-                    '//img[contains(@src, "media_attachments")]'
-                )
+                driver.find_element_by_xpath('//img[contains(@src, "media_attachments")]')
                 break
             except Exception:  # pylint: disable=broad-except
                 if time.time() > timeout:
@@ -169,17 +134,19 @@ def gab_post(
     headless: bool = False,
 ) -> None:
     """Logs into Gab.com and posts the given content."""
-
+    download_dir = driver_directory()
     leaks_session = driver_name != "firefox"
     if leaks_session:
         # What the heck is this a bug in chromium or gab? Session id leaks ACROSS
         # sessions.
-        with open_driver(driver_name, headless) as driver:
+        with open_webdriver(
+            driver_name, download_directory=download_dir, headless=headless
+        ) as driver:
             # Deep clean the local device storage and session id which for some reason
             # is cached.
             driver.session_id = None
 
-    with open_driver(driver_name, headless) as driver:
+    with open_webdriver(driver_name, download_directory=download_dir, headless=headless) as driver:
         try:
             _action_login(driver, username, password)
             _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
@@ -197,8 +164,11 @@ def gab_test(
     driver_name: str = DEFAULT_DRIVER_NAME, headless: bool = False
 ) -> Tuple[bool, Optional[Exception]]:
     """Tests if the gab driver works."""
+    download_dir = driver_directory()
     try:
-        with open_driver(driver_name, headless) as driver:
+        with open_webdriver(
+            driver_name, download_directory=download_dir, headless=headless
+        ) as driver:
             driver.get("https://gab.com")
         return True, None
     except Exception as err:  # pylint: disable=broad-except
