@@ -26,6 +26,8 @@ TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
 
 DEFAULT_DRIVER_NAME = "chrome"
 
+HEADLESS = "DISPLAY" not in os.environ
+
 
 def driver_directory() -> Path:
     """Directory containing the web driver."""
@@ -133,6 +135,8 @@ def gab_post(
     headless: bool = False,
 ) -> None:
     """Logs into Gab.com and posts the given content."""
+    if HEADLESS:
+        headless = True  # Force headless mode.
     download_dir = driver_directory()
     leaks_session = driver_name != "firefox"
     if leaks_session:
@@ -163,6 +167,8 @@ def gab_test(
     driver_name: str = DEFAULT_DRIVER_NAME, headless: bool = False
 ) -> Tuple[bool, Optional[Exception]]:
     """Tests if the gab driver works."""
+    if HEADLESS:
+        headless = True  # Force headless mode.
     download_dir = driver_directory()
     try:
         with open_webdriver(
