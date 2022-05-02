@@ -10,11 +10,10 @@ import time
 from typing import Optional, Tuple
 
 from download import download  # type: ignore
+from open_webdriver import Driver, open_webdriver  # type: ignore
 from pyjpgclipboard import clipboard_load_jpg  # type: ignore
 from selenium.webdriver.common.action_chains import ActionChains  # type: ignore
 from selenium.webdriver.common.keys import Keys  # type: ignore
-
-from .open_webdriver import Driver, open_webdriver
 
 # Simulate a phone screen orientation.
 WIDTH = 400
@@ -158,3 +157,7 @@ def gab_test(
         return True, None
     except Exception as err:  # pylint: disable=broad-except
         return False, err
+
+
+if __name__ == "__main__":
+    gab_test()

@@ -29,6 +29,7 @@ gab_post(USER, PASS, "test", jpg_path=FILE_JPG)
 Just simply run `tox` at the command line and everything should be tested. You may need to install `tox` with `python -m pip tox`.
 
 # Changes
+  * 1.2.2: Now uses `open-webdriver` to handle the setup of webdriver.
   * 1.2.1: Now works on windows/linux. Had to switch to `webdriver-setup`. Github platform unit tests now run on every update.
   * 1.2.0: Headless feature now implemented for chrome/brave. Experimental firefox support. Driver can now be selected as chrome/brave/firefox.
   * 1.1.0: Driver now uses chrome by default. Logic improved to work across browsers.
