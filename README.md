@@ -1,5 +1,9 @@
 # Gabposter
 
+[![Actions Status](https://github.com/zackees/gabposter/workflows/MacOS_Tests/badge.svg)](https://github.com/zackees/gabposter/actions/workflows/test_macos.yml)
+[![Actions Status](https://github.com/zackees/gabposter/workflows/Win_Tests/badge.svg)](https://github.com/zackees/gabposter/actions/workflows/test_win.yml)
+[![Actions Status](https://github.com/zackees/gabposter/workflows/Ubuntu_Tests/badge.svg)](https://github.com/zackees/gabposter/actions/workflows/test_ubuntu.yml)
+
 Posts to a gab account text and image.
 
 # Install
