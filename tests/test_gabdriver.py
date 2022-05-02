@@ -23,6 +23,10 @@ if FULL_TESTS:
 else:
     all_drivers = ["chrome"]
 
+# detect whether we are running in a headless display
+HEADLESS = "DISPLAY" not in os.environ
+PYJPGCLIPBOARD_UNSUPPORTED = sys.platform == "linux"
+
 
 class GabDriverTest(unittest.TestCase):
     """Gab driver test framework."""
@@ -39,22 +43,17 @@ class GabDriverTest(unittest.TestCase):
             ok, err = gab_test(driver, headless=True)  # pylint: disable=invalid-name
             self.assertTrue(ok, f"gab_test failed: {err}")
 
-    @unittest.skipIf(sys.platform == "linux", "pyjpgclipboard doesn't work on linux")
+    @unittest.skipIf(HEADLESS or PYJPGCLIPBOARD_UNSUPPORTED, "pyjpgclipboard doesn't work on linux")
     def test_dryrun_posting(self) -> None:
         """Tests that gab_post works, but doesn't not post."""
         for driver in all_drivers:
             gab_post(USER, PASS, "test", driver_name=driver, jpg_path=SMALL_IMG, dry_run=True)
 
-    @unittest.skipIf(sys.platform == "linux", "pyjpgclipboard doesn't work on linux")
-    def test_dryrun_posting_headless(self) -> None:
-        """Tests that gab_post works, but doesn't not post."""
-        for driver in all_drivers:
-            gab_post(USER, PASS, "test", driver_name=driver, jpg_path=SMALL_IMG, dry_run=True)
-
+    @unittest.skipIf(HEADLESS or PYJPGCLIPBOARD_UNSUPPORTED, "pyjpgclipboard doesn't work on linux")
     def test_dryrun_posting_with_image(self) -> None:
         """Tests that gab_post works, but doesn't not post."""
         for driver in all_drivers:
-            gab_post(USER, PASS, "test", driver_name=driver, dry_run=True)
+            gab_post(USER, PASS, "test", driver_name=driver, jpg_path=SMALL_IMG, dry_run=True)
 
     @unittest.skipUnless(LIVE_TESTING_ENABLED, "Live testing disabled")
     def test_live_posting(self) -> None:
