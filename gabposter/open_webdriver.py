@@ -23,7 +23,7 @@ os.environ["WDM_LOCAL"] = "1"
 
 def open_webdriver(driver_name: str, download_directory: Optional[Path], headless: bool) -> Driver:
     """Opens the web driver."""
-    opts: Any = {}
+    opts: Any = None
     if download_directory is not None:
         download_directory.mkdir(exist_ok=True, parents=True)
     if headless:
