@@ -16,7 +16,7 @@ from selenium.webdriver.common.action_chains import ActionChains  # type: ignore
 from selenium.webdriver.common.keys import Keys  # type: ignore
 
 from .app_dir import app_dir
-from .open_webdriver import open_webdriver
+from .open_webdriver import Driver, open_webdriver
 
 # Simulate a phone screen orientation.
 WIDTH = 400
