@@ -34,9 +34,11 @@ TIMEOUT_IMAGE_UPLOAD = 60  # Wait upto 60 seconds to upload the image.
 DEFAULT_DRIVER_NAME = "chrome"
 
 
-def driver_directory() -> Path:
+def driver_directory(driver_name) -> Path:
     """Directory containing the web driver."""
-    return app_dir() / "drivers"
+    out = app_dir() / "drivers" / driver_name
+    out.mkdir(exist_ok=True, parents=True)
+    return out
 
 
 def open_driver(driver_name: str, headless: bool) -> Driver:
@@ -57,7 +59,9 @@ def open_driver(driver_name: str, headless: bool) -> Driver:
             )
     if driver_name == "firefox":
         print(f"{__file__}: Warning: firefox browser has known issues.")
-    driver = Driver(driver_name, root=driver_directory(), driver_options=opts)
+    driver = Driver(
+        driver_name, root=driver_directory(driver_name), driver_options=opts
+    )
     return driver
 
 
@@ -105,7 +109,9 @@ def _action_make_post(
     # Upload the image if it's been specified.
     if jpg_path is not None:
         # Assert file has jpeg extension.
-        assert jpg_path.lower().endswith(".jpg"), f"{__file__}: {jpg_path} is not a jpeg file."
+        assert jpg_path.lower().endswith(
+            ".jpg"
+        ), f"{__file__}: {jpg_path} is not a jpeg file."
         # Copy the image to the clipboard and then paste it into the post.
         if "http" in jpg_path:
             # download the image url to a local temp file and then put it on the clipboard.
@@ -128,7 +134,9 @@ def _action_make_post(
             try:
                 # Wait for the image to upload.
                 # Find the element with the xpath that includes an image source
-                driver.find_element_by_xpath('//img[contains(@src, "media_attachments")]')
+                driver.find_element_by_xpath(
+                    '//img[contains(@src, "media_attachments")]'
+                )
                 break
             except Exception:  # pylint: disable=broad-except
                 if time.time() > timeout:
