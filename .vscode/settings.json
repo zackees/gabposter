@@ -3,8 +3,11 @@
         "."
     ],
     "python.venvFolders": [
-        "${workspaceFolder}/prod_env",
+        "${workspaceFolder}/venv",
     ],
+    "python.venvPath": "${workspaceFolder}/venv",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "terminal.integrated.windowsEnableConpty": true,
     "python.linting.pylintEnabled": true,
     "files.eol": "\n", // Unix
     "editor.tabSize": 4,
@@ -19,6 +22,13 @@
         "--profile",
         "black"
     ],
+    "python.terminal.activateEnvironment": true,
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "terminal.integrated.profiles.windows": {
+        "Git Bash": {
+            "path": "C:\\Program Files\\Git\\bin\\bash.exe"
+        }
+    },
     "[python]": {
         "editor.codeActionsOnSave": {
             "source.fixAll": true,

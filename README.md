@@ -29,6 +29,7 @@ gab_post(USER, PASS, "test", jpg_path=FILE_JPG)
 Just simply run `tox` at the command line and everything should be tested. You may need to install `tox` with `python -m pip tox`.
 
 # Changes
+  * 1.2.7: Updates the use of `open-webdriver` to v1.2.9
   * 1.2.3: `open-webdriver` now uses v1.1.7 or greater.
   * 1.2.2: Now uses `open-webdriver` to handle the setup of webdriver.
   * 1.2.1: Now works on windows/linux. Had to switch to `webdriver-setup`. Github platform unit tests now run on every update.

@@ -97,12 +97,13 @@ def _action_make_post(
                 if time.time() > timeout:
                     print(
                         f"{__file__}: Failed to upload image, because timed out waiting for "
-                        "{jpg_path} to upload"
+                        f"{jpg_path} to upload for {TIMEOUT_IMAGE_UPLOAD} seconds."
                     )
                     break
                 time.sleep(0.5)
     # Perform the post action.
     # Find an element that contains "Post"
+    time.sleep(1)
     el_post_btn = driver.find_element_by_xpath('//*[contains(text(), "Post")]')
     # put the mouse over the button of el_post_btn and click it.
     actions = ActionChains(driver)
@@ -120,20 +121,19 @@ def gab_post(
     content: str,
     jpg_path: Optional[str] = None,
     dry_run: bool = False,
-    driver_name: str = DEFAULT_DRIVER_NAME,
     headless: bool = False,
 ) -> None:
     """Logs into Gab.com and posts the given content."""
-    leaks_session = driver_name != "firefox"
+    leaks_session = True  # True for chrome.
     if leaks_session:
         # What the heck is this a bug in chromium or gab? Session id leaks ACROSS
         # sessions.
-        with open_webdriver(driver_name, headless=headless) as driver:
+        with open_webdriver(headless=headless) as driver:
             # Deep clean the local device storage and session id which for some reason
             # is cached.
             driver.session_id = None
 
-    with open_webdriver(driver_name, headless=headless) as driver:
+    with open_webdriver(headless=headless) as driver:
         try:
             _action_login(driver, username, password)
             _action_make_post(driver, content, jpg_path=jpg_path, dry_run=dry_run)
@@ -147,12 +147,10 @@ def gab_post(
                 print(f"{__file__}: Failed to clear local/session storage.")
 
 
-def gab_test(
-    driver_name: str = DEFAULT_DRIVER_NAME, headless: bool = False
-) -> Tuple[bool, Optional[Exception]]:
+def gab_test(headless: bool = False) -> Tuple[bool, Optional[Exception]]:
     """Tests if the gab driver works."""
     try:
-        with open_webdriver(driver_name, headless=headless) as driver:
+        with open_webdriver(headless=headless) as driver:
             driver.get("https://gab.com")
         return True, None
     except Exception as err:  # pylint: disable=broad-except
