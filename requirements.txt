@@ -1,3 +1,3 @@
-open-webdriver>=1.2.9
+open-webdriver>=1.3.0
 pyjpgclipboard>=1.0.2
 download
